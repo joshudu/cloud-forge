@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "app" {
       environment = [
         {
           name  = "DATABASE_URL"
-          value = "postgresql+asyncpg://wrong:wrong@nonexistent-host:5432/cloudforge"
+          value = "postgresql+asyncpg://${var.db_username}:${var.db_password}@${aws_db_instance.main.endpoint}/cloudforge"
         }
       ]
 
