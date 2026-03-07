@@ -8,5 +8,6 @@ def test_create_tenant_validation():
     assert response.status_code == 422
 
 def test_create_tenant_requires_name():
+    # Empty name should fail validation before hitting the database
     response = client.post("/tenants/", json={"name": ""})
-    assert response.status_code in [200, 400, 422]
+    assert response.status_code == 422
