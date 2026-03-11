@@ -5,14 +5,14 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.db.session import Base
-from app.models.tenant import Tenant  # import all models so Alembic sees them
+from app.models.tenant import Tenant  # import all models so Alembic sees them, this is important
 from app.models.user import User
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 def get_url():
-    # Alembic uses a sync URL — note postgresql:// not postgresql+asyncpg://
+    # Alembic uses a sync URL — note postgresql:// not postgresql+asyncpg:// this is the case
     return os.getenv("DATABASE_URL", "").replace("+asyncpg", "")
 def run_migrations_offline() -> None:
     url = get_url()
