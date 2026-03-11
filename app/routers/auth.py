@@ -9,6 +9,12 @@ from app.schemas.auth import UserRegister, UserLogin, TokenResponse, TokenRefres
 from app.auth.jwt import create_access_token, create_refresh_token, decode_token
 import re
 
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from app.core.security import limiter
+
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -24,7 +30,9 @@ def generate_schema_name(name: str) -> str:
     return f"tenant_{safe}"
 
 @router.post("/register", response_model=TokenResponse)
+@limiter.limit("5/minute")
 async def register(
+    request: Request,
     user_data: UserRegister,
     db: AsyncSession = Depends(get_db)
 ):
@@ -105,7 +113,9 @@ async def login(
     )
 
 @router.post("/login-tenant", response_model=TokenResponse)
+@limiter.limit("10/minute")
 async def login_with_tenant(
+    request: Request,
     tenant_name: str,
     user_data: UserLogin,
     db: AsyncSession = Depends(get_db)

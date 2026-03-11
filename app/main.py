@@ -1,14 +1,32 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 from app.routers import health, tenants, auth, projects, resources
 from app.core.logging import setup_logging
 from app.core.middleware import RequestContextMiddleware
+from app.core.security import limiter
 
-# Set up logging before anything else
 setup_logging()
 
 app = FastAPI(title="CloudForge", version="0.1.0")
 
-# Add middleware — order matters, first added is outermost
+# Rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS — explicitly list allowed origins, never use "*" in production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8000",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+)
+
 app.add_middleware(RequestContextMiddleware)
 
 app.include_router(health.router)
