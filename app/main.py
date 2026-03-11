@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
-from app.routers import health, tenants, auth, projects, resources
+from app.routers import health, tenants, auth, projects, resources, admin
 from app.core.logging import setup_logging
 from app.core.middleware import RequestContextMiddleware
 from app.core.security import limiter
@@ -11,7 +11,7 @@ setup_logging()
 
 app = FastAPI(title="CloudForge", version="0.1.0")
 
-# Rate limiter
+# Rate limiter compulsory at a high level
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -34,6 +34,7 @@ app.include_router(tenants.router)
 app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(resources.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def root():
