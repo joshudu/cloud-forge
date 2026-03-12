@@ -100,7 +100,7 @@ resource "aws_ecs_task_definition" "app" {
   ])
 }
 
-# Use the default VPC for now (Week 2 we'll harden this)
+# Use the default VPC for now (this is Week 2 we'll harden this)
 data "aws_vpc" "default" {
   default = true
 }
