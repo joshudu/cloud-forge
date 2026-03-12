@@ -58,7 +58,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         "width" : 12,
         "height" : 6,
         "properties" : {
-          "region" : "eu-west-2",
+          "region" : "eu-west-1",
           "title" : "Request Count",
           "period" : 60,
           "stat" : "Sum",
@@ -74,7 +74,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         "width" : 12,
         "height" : 6,
         "properties" : {
-          "region" : "eu-west-2",
+          "region" : "eu-west-1",
           "title" : "5xx Error Count",
           "period" : 60,
           "stat" : "Sum",
