@@ -52,24 +52,34 @@ resource "aws_cloudwatch_dashboard" "main" {
   dashboard_body = jsonencode({
     widgets = [
       {
-        type = "metric"
-        properties = {
-          title  = "Request Count"
-          period = 60
-          stat   = "Sum"
-          metrics = [
-            ["CloudForge/${var.environment}", "RequestCount"]
+        "type" : "metric",
+        "x" : 0,
+        "y" : 0,
+        "width" : 12,
+        "height" : 6,
+        "properties" : {
+          "region" : "eu-west-2",
+          "title" : "Request Count",
+          "period" : 60,
+          "stat" : "Sum",
+          "metrics" : [
+            [ "CloudForge/${var.environment}", "RequestCount" ]
           ]
         }
       },
       {
-        type = "metric"
-        properties = {
-          title  = "5xx Error Count"
-          period = 60
-          stat   = "Sum"
-          metrics = [
-            ["CloudForge/${var.environment}", "5xxErrorCount"]
+        "type" : "metric",
+        "x" : 0,
+        "y" : 6,
+        "width" : 12,
+        "height" : 6,
+        "properties" : {
+          "region" : "eu-west-2",
+          "title" : "5xx Error Count",
+          "period" : 60,
+          "stat" : "Sum",
+          "metrics" : [
+            [ "CloudForge/${var.environment}", "5xxErrorCount" ]
           ]
         }
       }
