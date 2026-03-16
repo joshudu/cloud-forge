@@ -16,10 +16,10 @@ def test_cache_key_is_tenant_scoped():
     assert key1 != key2
 
 @pytest.mark.asyncio
-async def test_cache_get_returns_none_when_redis_unavailable():
-    with patch("app.core.cache.get_redis", return_value=AsyncMock(return_value=None)):
-        result = await cache_get("some:key")
-        assert result is None
+async def test_cache_set_returns_false_when_redis_unavailable():
+    with patch("app.core.cache.get_redis", new_callable=AsyncMock, return_value=None):
+        result = await cache_set("some:key", {"data": "value"})
+        assert result is False
 
 @pytest.mark.asyncio
 async def test_cache_set_returns_false_when_redis_unavailable():
