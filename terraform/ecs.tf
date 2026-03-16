@@ -45,6 +45,34 @@ resource "aws_iam_policy" "secrets_access" {
   })
 }
 
+resource "aws_iam_policy" "sqs_access" {
+  name = "${var.app_name}-sqs-access-${var.environment}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ]
+        Resource = [
+          aws_sqs_queue.events.arn,
+          aws_sqs_queue.events_dlq.arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "sqs_access" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = aws_iam_policy.sqs_access.arn
+}
+
 resource "aws_iam_role_policy_attachment" "secrets_access" {
   role       = aws_iam_role.ecs_task_execution.name
   policy_arn = aws_iam_policy.secrets_access.arn
@@ -84,6 +112,18 @@ resource "aws_ecs_task_definition" "app" {
         {
           name  = "DATABASE_URL"
           value = "postgresql+asyncpg://${var.db_username}:${var.db_password}@${aws_db_instance.main.endpoint}/cloudforge"
+        },
+        {
+          name  = "REDIS_URL"
+          value = "redis://${aws_elasticache_cluster.main.cache_nodes[0].address}:6379"
+        },
+        {
+          name  = "ENVIRONMENT"
+          value = var.environment
+        },
+        {
+          name  = "AWS_REGION"
+          value = var.aws_region
         }
       ]
 
@@ -148,4 +188,50 @@ resource "aws_ecs_service" "app" {
   }
 
   depends_on = [aws_iam_role_policy_attachment.ecs_task_execution]
+}
+
+
+# Auto Scaling Target
+resource "aws_appautoscaling_target" "ecs" {
+  max_capacity       = 4
+  min_capacity       = 1
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.app.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+# Scale up when CPU > 70%
+resource "aws_appautoscaling_policy" "scale_up_cpu" {
+  name               = "${var.app_name}-scale-up-cpu-${var.environment}"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = 70.0
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+  }
+}
+
+# Scale up when memory > 80%
+resource "aws_appautoscaling_policy" "scale_up_memory" {
+  name               = "${var.app_name}-scale-up-memory-${var.environment}"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+    }
+    target_value       = 80.0
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+  }
 }

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudforge-config
+  namespace: cloudforge
+data:
+  ENVIRONMENT: "local"
+  AWS_REGION: "eu-west-1"
+  LOG_LEVEL: "INFO"

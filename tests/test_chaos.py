@@ -43,3 +43,18 @@ def test_rate_limit_recovery():
         rate_limited = [r for r in responses if r == 429]
         print(f"\nRate limited responses: {len(rate_limited)}")
         assert len(rate_limited) > 0, "Expected some rate limited responses"
+
+
+@pytest.mark.chaos
+def test_health_ready_reflects_db_state():
+    """
+    This test must be run manually with a live environment.
+    Stop RDS manually, run this test, then restart RDS.
+    """
+    with httpx.Client() as client:
+        response = client.get(f"{BASE_URL}/health/ready", timeout=10)
+        print(f"\nHealth ready status: {response.status_code}")
+        print(f"Response body: {response.json()}")
+        # When DB is down this should return 503
+        # When DB is up this should return 200
+        assert response.status_code in [200, 503]

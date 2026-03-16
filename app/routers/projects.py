@@ -5,6 +5,8 @@ from app.auth.dependencies import get_tenant_db, get_current_user_payload
 from app.repositories.project_repo import ProjectRepository
 from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse
+from app.core.cache import cache_get, cache_set, cache_invalidate, make_cache_key
+from app.core.events import publish_event
 from typing import List
 import json
 
@@ -16,6 +18,7 @@ async def create_project(
     payload: dict = Depends(get_current_user_payload),
     db: AsyncSession = Depends(get_tenant_db),
 ):
+    schema = payload.get("schema")
     repo = ProjectRepository(db)
 
     existing = await repo.get_by_name(project_data.name)
@@ -30,7 +33,20 @@ async def create_project(
         description=project_data.description,
         created_by=payload.get("sub"),
     )
-    return await repo.create(project)
+    created = await repo.create(project)
+
+    # Invalidate cache on create
+    await cache_invalidate(f"{schema}:projects:*")
+
+    # Publish event — fire and forget
+    await publish_event("project.created", {
+        "project_id": str(created.id),
+        "tenant_id": payload.get("tenant_id"),
+        "name": created.name,
+    })
+
+    return created
+
 
 @router.get("/", response_model=List[ProjectResponse])
 async def list_projects(
