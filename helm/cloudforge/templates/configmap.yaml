@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  namespace: {{ .Release.Namespace }}
+data:
+  ENVIRONMENT: {{ .Values.config.environment | quote }}
+  AWS_REGION: {{ .Values.config.awsRegion | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
