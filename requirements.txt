@@ -18,3 +18,4 @@ tenacity==8.2.3
 redis[asyncio]==5.0.1
 locust==2.20.0
 bcrypt==4.0.1
+aws-xray-sdk==2.12.1

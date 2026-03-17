@@ -7,8 +7,11 @@ from app.routers import health, tenants, auth, projects, resources, admin
 from app.core.logging import setup_logging, get_logger
 from app.core.middleware import RequestContextMiddleware
 from app.core.security import limiter
+from app.core.tracing import setup_xray, get_xray_middleware
+
 
 setup_logging()
+setup_xray()
 logger = get_logger(__name__)
 
 @asynccontextmanager
@@ -34,6 +37,10 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+xray_middleware = get_xray_middleware()
+if xray_middleware:
+    app.add_middleware(xray_middleware, recorder=None)
+    
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
